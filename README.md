@@ -12,7 +12,7 @@ Next.js と Supabase Auth を使った、メールアドレス認証付き Todo 
 
 ### 現在の実装範囲
 
-現在は Next.js の初期構築と Supabase のメール認証までを実装しています。ゲストモード、Todo の登録・更新・削除、Todo データベース、Prisma によるデータアクセスは今後の実装対象です。Supabase Auth が管理するユーザー情報と、アプリ独自の Todo データは別のものとして扱います。
+Next.js の初期構築、Supabase のメール認証、Prisma によるログインユーザーごとの Todo 一覧・追加・編集・完了状態の変更・削除を実装しています。ゲストモードは今後の実装対象です。Supabase Auth が管理するユーザー情報と、アプリ独自の Todo データは別のものとして扱います。
 
 ## 開発環境
 
@@ -57,6 +57,8 @@ pnpm install
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
+DATABASE_URL=postgresql://<database-user>:<encoded-password>@<pooler-host>:6543/postgres?sslmode=verify-full&sslrootcert=certs/supabase-ca.crt
+DIRECT_URL=postgresql://<database-user>:<encoded-password>@<pooler-host>:5432/postgres?sslmode=verify-full&sslrootcert=certs/supabase-ca.crt
 ```
 
 `NEXT_PUBLIC_` が付いた値はブラウザー側のコードから参照できる公開設定です。Publishable key はクライアント利用を想定したキーです。Secret key や `service_role` key はブラウザーに公開せず、`NEXT_PUBLIC_` 環境変数にも設定しないでください。データベースを利用する際は、テーブルの Row Level Security (RLS) と適切なポリシーでアクセスを制御します。
@@ -64,6 +66,16 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 `.env.local` は Git の追跡対象外です。共有用の変数名だけを記載した `.env.example` を参照してください。環境変数を変更した場合は、開発サーバーを再起動してください。
 
 ## ローカルでの起動
+
+Todo 用の `DATABASE_URL` は Supabase の **Connect → Transaction pooler**（ポート 6543）から取得します。マイグレーション用の `DIRECT_URL` は **Session pooler**（ポート 5432）から取得します。DB パスワードの特殊文字は URL エンコードしてください。これらはサーバー専用であり、`NEXT_PUBLIC_` を付けません。初回起動前に次のコマンドで Todo テーブルを作成します。
+
+```powershell
+pnpm db:migrate
+```
+
+アプリは `DATABASE_URL`、Prisma CLI のマイグレーションは `DIRECT_URL` を使用します。ローカル環境でも Vercel でも同じ役割で設定します。
+
+Todo の操作はブラウザーから Next.js の `/api/todos` に送信します。サーバーで Supabase Auth のユーザーを検証し、そのユーザー ID を条件に Prisma から PostgreSQL を操作します。ブラウザーから渡されたユーザー ID は使用しません。Todo テーブルは RLS を有効にし、`anon` / `authenticated` ロールによる Data API 経由の直接アクセスを許可していません。Prisma の接続にはテーブル操作権限を持つサーバー専用の DB ロールが必要です。
 
 ```powershell
 pnpm dev

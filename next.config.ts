@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/api/todos": ["./certs/supabase-ca.crt"],
+    "/api/todos/*": ["./certs/supabase-ca.crt"],
+  },
   /* config options here */
   experimental: {
     agentFeedback: true,

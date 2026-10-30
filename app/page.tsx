@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { TodoList } from "@/components/todos/todo-list";
 
 type Mode = "signup" | "login";
 type Notice = { kind: "success" | "error"; text: string };
@@ -106,14 +107,14 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f4f6f2] p-5 text-[#18231e]">
-      <section className="w-full max-w-md rounded-3xl bg-white p-7 shadow-[0_24px_80px_rgba(29,50,39,0.12)] sm:p-10">
+      <section className={`w-full ${user ? "max-w-2xl" : "max-w-md"} rounded-3xl bg-white p-7 shadow-[0_24px_80px_rgba(29,50,39,0.12)] sm:p-10`}>
         <div className="mb-8 flex size-11 items-center justify-center rounded-xl bg-[#244b38] text-xl font-semibold text-white" aria-hidden="true">✓</div>
         {user ? (
           <>
             <p className="text-xs font-bold tracking-[0.18em] text-emerald-700">SIGNED IN</p>
-            <h1 className="mt-3 text-3xl font-semibold">로그인됐어요.</h1>
+            <h1 className="mt-3 text-3xl font-semibold">오늘의 할 일을 정리해요.</h1>
             <p className="mt-3 break-all text-sm text-gray-600">{user.email}</p>
-            <p className="mt-7 rounded-xl bg-[#f4f6f2] p-4 text-sm leading-6 text-gray-600">계정 연결이 완료됐어요. Todo 목록 기능은 다음 단계에서 추가할 수 있어요.</p>
+            <TodoList key={user.id} />
             <button type="button" onClick={signOut} disabled={busy} className="mt-6 h-12 w-full rounded-xl border border-gray-200 text-sm font-semibold hover:bg-gray-50 disabled:opacity-60">{busy ? "처리 중..." : "로그아웃"}</button>
           </>
         ) : (
