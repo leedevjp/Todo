@@ -1,5 +1,5 @@
 import { getPrisma } from "@/lib/prisma";
-import { checkId, json, readBody, readTitle, TodoError, withUser } from "@/lib/todos/api";
+import { checkId, json, readBody, readTitle, TodoError, withUser } from "@/lib/todos/server-utils";
 
 type Context = { params: Promise<{ id: string }> };
 

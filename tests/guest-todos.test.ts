@@ -1,7 +1,7 @@
 import { beforeEach, test, mock } from "node:test";
 import assert from "node:assert/strict";
-import { GUEST_MODE_KEY, GUEST_TODOS_KEY, guestTodos, isGuestMode, readGuestTodos, setGuestMode } from "../lib/todos/guest";
-import { accountTodos } from "../lib/todos/client";
+import { GUEST_MODE_KEY, GUEST_TODOS_KEY, guestTodos, isGuestMode, readGuestTodos, setGuestMode } from "../lib/todos/guest-storage";
+import { accountTodos } from "../lib/todos/http-client";
 import { authErrorMessage } from "../lib/supabase/auth-message";
 
 class MemoryStorage implements Storage {

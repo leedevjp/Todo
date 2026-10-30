@@ -2,8 +2,8 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { MAX_TITLE_LENGTH, type Todo } from "@/lib/todos/types";
-import { accountTodos } from "@/lib/todos/client";
-import { GUEST_TODOS_KEY, guestTodos } from "@/lib/todos/guest";
+import { accountTodos } from "@/lib/todos/http-client";
+import { GUEST_TODOS_KEY, guestTodos } from "@/lib/todos/guest-storage";
 
 const field = "h-11 min-w-0 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-emerald-700 focus:ring-4 focus:ring-emerald-700/10 disabled:opacity-50";
 const button = "rounded-lg px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40";

@@ -1,5 +1,5 @@
 import { getPrisma } from "@/lib/prisma";
-import { json, readBody, readTitle, withUser } from "@/lib/todos/api";
+import { json, readBody, readTitle, withUser } from "@/lib/todos/server-utils";
 
 export async function GET(request: Request) {
   return withUser(request, async (userId) => {
