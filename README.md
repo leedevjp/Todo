@@ -1,32 +1,109 @@
-# Todo
+# Todoアプリ
 
-Next.js App Router starter with Supabase email authentication.
+Next.js と Supabase Auth を使った、メールアドレス認証付き Todo アプリの学習・実践プロジェクトです。メールアドレスとパスワードでの新規登録、メール確認、ログインを実装しています。
 
-## Run locally
+## プロジェクトの構成
 
-Install dependencies and start the development server:
+- **Next.js App Router**: 画面と認証コールバックを実装
+- **Supabase Auth**: ユーザー登録、メール確認、ログインを管理
+- **`@supabase/ssr`**: Next.js のブラウザー／サーバー環境に応じた Supabase クライアントを作成し、認証セッションを Cookie で共有
+- **`@supabase/supabase-js`**: Supabase JavaScript クライアントの基盤
+- **pnpm**: パッケージ管理
 
-~~~bash
+### 現在の実装範囲
+
+現在は Next.js の初期構築と Supabase のメール認証までを実装しています。ゲストモード、Todo の登録・更新・削除、Todo データベース、Prisma によるデータアクセスは今後の実装対象です。Supabase Auth が管理するユーザー情報と、アプリ独自の Todo データは別のものとして扱います。
+
+## 開発環境
+
+- Node.js 20.9 以上
+- pnpm 11.15.1
+- Supabase プロジェクト
+
+## 新規プロジェクトの作成手順
+
+Windows のコマンドプロンプトまたは PowerShell で、作成先の親フォルダーへ移動して Next.js プロジェクトを作成します。
+
+```powershell
+cd C:\Public
+pnpm create next-app@latest Todo
+```
+
+セットアップ時は TypeScript、ESLint、Tailwind CSS、App Router を選択します。作成後、プロジェクトのフォルダーへ移動して Supabase パッケージを追加します。
+
+```powershell
+cd Todo
+pnpm add @supabase/ssr @supabase/supabase-js
+```
+
+このリポジトリをすでに取得している場合は、`create-next-app` による作成は不要です。次の手順で依存関係をインストールしてください。
+
+```powershell
 pnpm install
+```
+
+## Supabase プロジェクトの準備
+
+1. Supabase にアカウント登録してログインします。
+2. Supabase Dashboard でプロジェクトを作成します。
+3. プロジェクトの URL を確認します。
+4. **Project Settings → API Keys** で Publishable key を確認します。キーがまだ発行されていない場合は作成します。
+5. Authentication のメール確認を有効にし、ローカル開発時の Site URL と許可する Redirect URL に `http://localhost:3000` を設定します。
+
+## 環境変数
+
+プロジェクトのルートに `.env.local` を作成します。Supabase Dashboard の Project URL と Publishable key を設定してください。
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
+```
+
+`NEXT_PUBLIC_` が付いた値はブラウザー側のコードから参照できる公開設定です。Publishable key はクライアント利用を想定したキーです。Secret key や `service_role` key はブラウザーに公開せず、`NEXT_PUBLIC_` 環境変数にも設定しないでください。データベースを利用する際は、テーブルの Row Level Security (RLS) と適切なポリシーでアクセスを制御します。
+
+`.env.local` は Git の追跡対象外です。共有用の変数名だけを記載した `.env.example` を参照してください。環境変数を変更した場合は、開発サーバーを再起動してください。
+
+## ローカルでの起動
+
+```powershell
 pnpm dev
-~~~
+```
 
-Open http://localhost:3000.
+ブラウザーで [http://localhost:3000](http://localhost:3000) を開きます。
 
-## Supabase setup
+## Supabase クライアントの使い分け
 
-This project uses Supabase Auth for email/password registration and login. User identities are stored by Supabase Auth; no application users table is needed for authentication.
+クライアント生成関数は `lib/supabase/` にまとめています。
 
-In the Supabase Dashboard:
+- `lib/supabase/client.ts` は `@supabase/ssr` の `createBrowserClient()` を使います。Client Component での新規登録、ログイン、ログイン状態の表示など、ブラウザーで実行する処理に使用します。
+- `lib/supabase/server.ts` は `createServerClient()` と Next.js の `cookies()` を接続します。Route Handler や Server Component など、サーバーで実行する認証処理に使用します。
+- `NEXT_PUBLIC_SUPABASE_URL` と `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` は両方のクライアント生成に渡します。`@supabase/ssr` が Cookie の読み書きを仲介し、ブラウザーとサーバーで認証セッションを扱えるようにします。
 
-1. Enable email signups and email confirmation under Authentication settings.
-2. Set the Site URL to http://localhost:3000.
-3. Add http://localhost:3000/** to the allowed redirect URLs.
+`@supabase/ssr` は Supabase API の代わりではありません。Auth やデータベース API を呼び出すクライアント機能は `@supabase/supabase-js` が提供し、`@supabase/ssr` は Next.js のサーバー・ブラウザー間で Cookie ベースのセッションを扱うための仕組みを提供します。
 
-The project environment values are in .env.example. Copy it to .env.local and set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to the project's publishable key. .env.local is ignored by Git.
+## メール認証の流れ
 
-The email link returns to /auth/callback, which exchanges the one-time code for a session. The callback page displays the confirmation result and signals the original signup tab when both tabs are open in the same browser.
+1. `app/page.tsx` からブラウザー用クライアントで `signUp()` を呼び出します。
+2. Supabase Auth がユーザー登録を処理し、確認メールを送信します。
+3. メール内のリンクは Next.js の `/auth/callback` Route Handler に戻ります。
+4. `app/auth/callback/route.ts` がサーバー用クライアントで認証コードを `exchangeCodeForSession()` によりセッションへ交換します。
+5. サーバー用クライアントが Cookie を設定し、認証完了画面 `/auth/verified` へリダイレクトします。
+6. 完了画面がユーザーを確認し、`BroadcastChannel` で同じブラウザーにある元の登録画面へ認証完了を通知します。
 
-## Next steps
+メール確認に失敗した場合やリンクが無効な場合は `/auth/error` を表示します。
 
-Add guest-mode Todo storage and the authenticated Todo database flow in a later step.
+## 主なコマンド
+
+```powershell
+pnpm dev      # 開発サーバー
+pnpm lint     # ESLint
+pnpm build    # 本番用ビルド
+pnpm start    # 本番ビルドの起動
+```
+
+## 参考資料
+
+- [Supabase: Next.js で Supabase を使用する](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs)
+- [Supabase: SSR クライアントの作成](https://supabase.com/docs/guides/auth/server-side/creating-a-client)
+- [Supabase: API Keys](https://supabase.com/docs/guides/getting-started/api-keys)
+- [Next.js: インストールと create-next-app](https://nextjs.org/docs/app/getting-started/installation)
