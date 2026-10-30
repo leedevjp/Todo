@@ -11,10 +11,10 @@ export async function PATCH(request: Request, context: Context) {
     const data: { title?: string; completed?: boolean } = {};
     if ("title" in body) data.title = readTitle(body.title);
     if ("completed" in body) {
-      if (typeof body.completed !== "boolean") throw new TodoError("완료 상태가 올바르지 않아요.");
+      if (typeof body.completed !== "boolean") throw new TodoError("完了状態が正しくありません。");
       data.completed = body.completed;
     }
-    if (!Object.keys(data).length) throw new TodoError("변경할 내용을 입력해 주세요.");
+    if (!Object.keys(data).length) throw new TodoError("変更内容を指定してください。");
     const todo = await getPrisma().todo.update({ where: { id, userId }, data });
     return json({ todo });
   });
@@ -25,7 +25,7 @@ export async function DELETE(request: Request, context: Context) {
     const { id } = await context.params;
     checkId(id);
     const result = await getPrisma().todo.deleteMany({ where: { id, userId } });
-    if (!result.count) throw new TodoError("할 일을 찾을 수 없어요.", 404);
+    if (!result.count) throw new TodoError("タスクが見つかりません。", 404);
     return json({ deleted: true });
   });
 }
